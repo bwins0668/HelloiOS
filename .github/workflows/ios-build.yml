@@ -33,15 +33,29 @@ jobs:
             -sdk iphonesimulator \
             -destination 'generic/platform=iOS Simulator' \
             -configuration Debug \
-            -derivedDataPath build \
+            SYMROOT=$PWD/build \
             build \
             CODE_SIGN_IDENTITY="" \
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGNING_ALLOWED=NO
 
+      - name: Locate and Verify .app
+        run: |
+          echo "查找 Build 产物..."
+          find "$PWD/build" -name "*.app" -type d
+          echo "---"
+          APP_PATH=$(find "$PWD/build" -name "HelloiOS.app" -type d | head -1)
+          if [ -z "$APP_PATH" ]; then
+            echo "❌ 未找到 HelloiOS.app"
+            ls -laR "$PWD/build" | head -40
+            exit 1
+          fi
+          echo "✅ 找到: $APP_PATH"
+          echo "APP_PATH=$APP_PATH" >> $GITHUB_ENV
+
       - name: Upload .app Artifact
         uses: actions/upload-artifact@v4
         with:
           name: HelloiOS-Simulator.app
-          path: build/Build/Products/Debug-iphonesimulator/HelloiOS.app
+          path: ${{ env.APP_PATH }}
           retention-days: 30
