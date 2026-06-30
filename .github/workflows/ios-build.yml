@@ -1,4 +1,4 @@
-name: iOS Build (Simulator)
+name: iOS Build (Device, unsigned)
 
 on:
   push:
@@ -9,7 +9,7 @@ on:
 
 jobs:
   build:
-    name: XcodeGen + Build for Simulator
+    name: Build unsigned device IPA
     runs-on: macos-latest
 
     steps:
@@ -22,16 +22,13 @@ jobs:
       - name: Generate Xcode Project
         run: xcodegen generate
 
-      - name: Select Xcode
-        run: sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
-
-      - name: Build for Simulator
+      - name: Build for Device (unsigned)
         run: |
           xcodebuild \
             -project HelloiOS.xcodeproj \
             -scheme HelloiOS \
-            -sdk iphonesimulator \
-            -destination 'generic/platform=iOS Simulator' \
+            -sdk iphoneos \
+            -destination 'generic/platform=iOS' \
             -configuration Debug \
             SYMROOT=$PWD/build \
             build \
@@ -39,23 +36,19 @@ jobs:
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGNING_ALLOWED=NO
 
-      - name: Locate and Verify .app
+      - name: Package as unsigned IPA
         run: |
-          echo "查找 Build 产物..."
-          find "$PWD/build" -name "*.app" -type d
-          echo "---"
           APP_PATH=$(find "$PWD/build" -name "HelloiOS.app" -type d | head -1)
-          if [ -z "$APP_PATH" ]; then
-            echo "❌ 未找到 HelloiOS.app"
-            ls -laR "$PWD/build" | head -40
-            exit 1
-          fi
           echo "✅ 找到: $APP_PATH"
-          echo "APP_PATH=$APP_PATH" >> $GITHUB_ENV
+          mkdir Payload
+          cp -R "$APP_PATH" Payload/
+          cd Payload && zip -r ../HelloiOS-unsigned.ipa * && cd ..
+          ls -lh HelloiOS-unsigned.ipa
+          rm -rf Payload
 
-      - name: Upload .app Artifact
+      - name: Upload IPA
         uses: actions/upload-artifact@v4
         with:
-          name: HelloiOS-Simulator.app
-          path: ${{ env.APP_PATH }}
+          name: HelloiOS-unsigned.ipa
+          path: HelloiOS-unsigned.ipa
           retention-days: 30
