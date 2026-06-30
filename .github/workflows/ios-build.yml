@@ -43,5 +43,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: HelloiOS-Simulator.app
-          path: build/Debug-iphonesimulator/HelloiOS.app
+          path: build/Build/Products/Debug-iphonesimulator/HelloiOS.app
           retention-days: 30
