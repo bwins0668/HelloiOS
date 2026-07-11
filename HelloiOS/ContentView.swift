@@ -95,7 +95,6 @@ private final class JumpEngine: ObservableObject {
     }
 
     func start() {
-        stopLoop()
         score = 0
         highestY = 80
         playerX = worldWidth * 0.5
