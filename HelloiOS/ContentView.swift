@@ -63,7 +63,6 @@ private final class JumpEngine: ObservableObject {
     private var nextPlatformY: CGFloat = 0
     private var worldWidth: CGFloat = 390
     private var worldHeight: CGFloat = 844
-    private var displayLink: CADisplayLink?
     private let bestKey = "helloios.jump.best"
 
     // tuning
@@ -112,15 +111,14 @@ private final class JumpEngine: ObservableObject {
         seedPlatforms()
         phase = .playing
         lastTime = nil
-        startLoop()
         UIImpactFeedbackGenerator(style: .soft).impactOccurred()
     }
 
     func backToMenu() {
-        stopLoop()
         phase = .menu
         particles = []
         moveInput = 0
+        lastTime = nil
     }
 
     func setInput(_ x: CGFloat) {
@@ -133,20 +131,8 @@ private final class JumpEngine: ObservableObject {
         moveInput *= 0.2
     }
 
-    private func startLoop() {
-        let link = CADisplayLink(target: TickTarget(owner: self), selector: #selector(TickTarget.tick))
-        link.preferredFrameRateRange = CAFrameRateRange(minimum: 30, maximum: 120, preferred: 60)
-        link.add(to: .main, forMode: .common)
-        displayLink = link
-    }
-
-    private func stopLoop() {
-        displayLink?.invalidate()
-        displayLink = nil
-        lastTime = nil
-    }
-
-    fileprivate func step(now: Date) {
+    /// Called from SwiftUI TimelineView on the main actor (~60fps).
+    func step(now: Date) {
         guard phase == .playing else { return }
         let dt: CGFloat
         if let last = lastTime {
@@ -336,9 +322,9 @@ private final class JumpEngine: ObservableObject {
     }
 
     private func gameOver() {
-        stopLoop()
         phase = .gameOver
         moveInput = 0
+        lastTime = nil
         UINotificationFeedbackGenerator().notificationOccurred(.error)
     }
 
@@ -353,15 +339,6 @@ private final class JumpEngine: ObservableObject {
     func platformDrawX(_ p: Platform) -> CGFloat { movedX(for: p) }
 
     var playerRadius: CGFloat { playerR }
-}
-
-// CADisplayLink target (avoid retain cycle via weak)
-private final class TickTarget: NSObject {
-    weak var owner: JumpEngine?
-    init(owner: JumpEngine) { self.owner = owner }
-    @objc func tick() {
-        owner?.step(now: Date())
-    }
 }
 
 // MARK: - Root View
@@ -546,9 +523,14 @@ struct ContentView: View {
 
     private func playLayer(size: CGSize) -> some View {
         ZStack {
-            // world
-            Canvas { ctx, canvasSize in
-                drawWorld(ctx: ctx, size: canvasSize)
+            // world + game clock
+            TimelineView(.animation(minimumInterval: 1.0 / 60.0, paused: game.phase != .playing)) { timeline in
+                Canvas { ctx, canvasSize in
+                    drawWorld(ctx: ctx, size: canvasSize)
+                }
+                .onChange(of: timeline.date) { _, date in
+                    game.step(now: date)
+                }
             }
             .gesture(
                 DragGesture(minimumDistance: 0)
@@ -624,13 +606,13 @@ struct ContentView: View {
             }
 
             // shadow
-            var shadow = Path(roundedRect: rect.offsetBy(dx: 0, dy: 4), cornerRadius: 8)
+            let shadow = Path(roundedRect: rect.offsetBy(dx: 0, dy: 4), cornerRadius: 8)
             ctx.fill(shadow, with: .color(.black.opacity(0.18)))
 
-            var path = Path(roundedRect: rect, cornerRadius: 8)
+            let path = Path(roundedRect: rect, cornerRadius: 8)
             ctx.fill(path, with: .color(color.opacity(0.95)))
             // top gloss
-            var gloss = Path(roundedRect: CGRect(x: rect.minX + 4, y: rect.minY + 2, width: rect.width - 8, height: 4), cornerRadius: 3)
+            let gloss = Path(roundedRect: CGRect(x: rect.minX + 4, y: rect.minY + 2, width: rect.width - 8, height: 4), cornerRadius: 3)
             ctx.fill(gloss, with: .color(.white.opacity(0.35)))
 
             if p.kind == .spring {
