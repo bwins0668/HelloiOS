@@ -82,6 +82,7 @@ class GameScene: SKScene {
     }
     
     private func bindState() {
+        // Phase changes
         gameState.$phase.sink { [weak self] phase in
             self?.onPhaseChange(phase)
         }.store(in: &cancellables)
@@ -313,9 +314,54 @@ class GameScene: SKScene {
         }
     }
     
-    fileprivate func restartGame() {
+    private func restartGame() {
         removeAllChildren()
         cancellables.removeAll()
         didMove(to: view!)
+    }
+}
+
+// MARK: - GameOverTouchHandler
+
+class GameOverTouchHandler: NSObject {
+    let overlay: SKNode
+    let scene: GameScene
+    let won: Bool
+    
+    init(overlay: SKNode, scene: GameScene, won: Bool) {
+        self.overlay = overlay
+        self.scene = scene
+        self.won = won
+        super.init()
+        overlay.isUserInteractionEnabled = true
+    }
+    
+    @MainActor
+    func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
+        guard let touch = touches.first else { return }
+        let location = touch.location(in: overlay)
+        let node = overlay.atPoint(location)
+        
+        if node.name == "retry" {
+            overlay.run(.fadeOut(withDuration: 0.2)) {
+                self.scene.handleRetry()
+            }
+        } else if node.name == "menu" {
+            overlay.run(.fadeOut(withDuration: 0.2)) {
+                self.scene.gameState.phase = .menu
+            }
+        }
+    }
+}
+
+extension GameScene {
+    @MainActor
+    func handleRetry() {
+        restartGame()
+    }
+    
+    @MainActor
+    func handleMenu() {
+        gameState.phase = .menu
     }
 }

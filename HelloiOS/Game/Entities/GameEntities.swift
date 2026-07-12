@@ -498,19 +498,17 @@ class DealerNode: SKNode {
         }
     }
     
+    @MainActor
     private func blink() {
-        DispatchQueue.main.async { [weak self] in
-            guard let self = self,
-                  let leftEye = self.eyes.childNode(withName: "left_eye") as? SKSpriteNode,
-                  let rightEye = self.eyes.childNode(withName: "right_eye") as? SKSpriteNode else { return }
-            
-            let blinkAction = SKAction.sequence([
-                SKAction.scaleY(to: 0.1, duration: 0.08),
-                SKAction.scaleY(to: 1.0, duration: 0.08)
-            ])
-            leftEye.run(blinkAction)
-            rightEye.run(blinkAction)
-        }
+        guard let leftEye = eyes.childNode(withName: "left_eye") as? SKSpriteNode,
+              let rightEye = eyes.childNode(withName: "right_eye") as? SKSpriteNode else { return }
+        
+        let blinkAction = SKAction.sequence([
+            SKAction.scaleY(to: 0.1, duration: 0.08),
+            SKAction.scaleY(to: 1.0, duration: 0.08)
+        ])
+        leftEye.run(blinkAction)
+        rightEye.run(blinkAction)
     }
     
     // MARK: - Mood Expressions

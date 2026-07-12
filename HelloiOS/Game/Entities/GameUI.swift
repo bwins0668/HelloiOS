@@ -169,13 +169,13 @@ class HUDNode: SKNode {
         let color = turn == .player ? SKColor(hex: 0x00FF88) : SKColor(hex: 0xFF2244)
         turnLabel.text = text
         turnLabel.fontColor = color
-        turnLabel.run(.sequence([.scale(to: 1.2, duration: 0.1), .scale(to: 1.0, duration: 0.1)]))
+        turnLabel.run(SKAction.sequence([SKAction.scale(to: 1.2, duration: 0.1), SKAction.scale(to: 1.0, duration: 0.1)]))
     }
     func setSawActive(_ active: Bool) {
         sawIndicator.text = active ? "🪚 手锯生效 · 伤害×2" : ""
-        sawIndicator.run(.sequence([
-            .fadeAlpha(to: active ? 1 : 0, duration: 0.2),
-            .scale(to: active ? 1.1 : 1.0, duration: 0.2)
+        sawIndicator.run(SKAction.sequence([
+            SKAction.fadeAlpha(to: active ? 1 : 0, duration: 0.2),
+            SKAction.scale(to: active ? 1.1 : 1.0, duration: 0.2)
         ]))
     }
 }
@@ -205,9 +205,9 @@ class HeartNode: SKNode {
             glow.strokeColor = .clear
             glow.lineWidth = 0
             glow.zPosition = -1
-            glow.run(.repeatForever(.sequence([
-                .scale(to: 1.2, duration: 0.8),
-                .scale(to: 1.0, duration: 0.8)
+            glow.run(SKAction.repeatForever(SKAction.sequence([
+                SKAction.scale(to: 1.2, duration: 0.8),
+                SKAction.scale(to: 1.0, duration: 0.8)
             ])))
             addChild(glow)
         }
@@ -319,12 +319,14 @@ class MagnifierOverlay: SKNode {
         guard let touch = touches.first else { return }
         let location = touch.location(in: self)
         if atPoint(location).name == "close" {
-            run(.sequence([.fadeOut(withDuration: 0.2), .removeFromParent()]))
+            run(SKAction.sequence([SKAction.fadeOut(withDuration: 0.2), SKAction.removeFromParent()]))
         }
     }
 }
 
 // MARK: - Game Over Touch Handler
+
+@MainActor
 class GameOverTouchHandler: NSObject {
     let overlay: SKNode
     let scene: GameScene
@@ -345,7 +347,7 @@ class GameOverTouchHandler: NSObject {
         
         if node.name == "retry" {
             overlay.run(.fadeOut(withDuration: 0.2)) {
-                self.scene.restartGame()
+                self.scene.handleRetry()
             }
         } else if node.name == "menu" {
             overlay.run(.fadeOut(withDuration: 0.2)) {
