@@ -80,11 +80,11 @@ class ShellDisplayNode: SKNode {
             shell.alpha = 0.3
             primer.alpha = 0.3
             glow?.alpha = 0
-            run(.scale(to: 0.7, duration: 0.2))
+            run(SKAction.scale(to: 0.7, duration: 0.2))
         } else if isCurrent {
             shell.alpha = 1
             primer.alpha = 1
-            run(.scale(to: 1.1, duration: 0.2))
+            run(SKAction.scale(to: 1.1, duration: 0.2))
             
             if known != nil {
                 let color = displayType == .live ? 0xFF2222 : 0xDDDD33
@@ -92,9 +92,9 @@ class ShellDisplayNode: SKNode {
                 let primerColor = displayType == .live ? 0xAA0000 : 0xAAAA00
                 primer.texture = SKTexture.fromColor(primerColor, size: primer.size)
                 
-                run(.repeatForever(.sequence([
-                    .scale(to: 1.15, duration: 0.5),
-                    .scale(to: 1.0, duration: 0.5)
+                run(SKAction.repeatForever(SKAction.sequence([
+                    SKAction.scale(to: 1.15, duration: 0.5),
+                    SKAction.scale(to: 1.0, duration: 0.5)
                 ])), withKey: "pulse")
             } else {
                 removeAction(forKey: "pulse")
@@ -102,7 +102,7 @@ class ShellDisplayNode: SKNode {
         } else {
             shell.alpha = 0.6
             primer.alpha = 0.6
-            run(.scale(to: 0.9, duration: 0.2))
+            run(SKAction.scale(to: 0.9, duration: 0.2))
         }
     }
     
@@ -214,12 +214,12 @@ class ShotgunNode: SKNode {
             shellDisplayNodes.append(shellNode)
             
             let delay = Double(i) * 0.15
-            shellNode.run(.sequence([
-                .wait(forDuration: delay),
-                .group([
-                    .fadeIn(withDuration: 0.2),
-                    .scale(to: 1.1, duration: 0.15),
-                    .scale(to: 1.0, duration: 0.1)
+            shellNode.run(SKAction.sequence([
+                SKAction.wait(forDuration: delay),
+                SKAction.group([
+                    SKAction.fadeIn(withDuration: 0.2),
+                    SKAction.scale(to: 1.1, duration: 0.15),
+                    SKAction.scale(to: 1.0, duration: 0.1)
                 ])
             ]))
         }
@@ -248,9 +248,9 @@ class ShotgunNode: SKNode {
             sawIcon.zPosition = 20
             sawIcon.name = "saw_indicator"
             body.addChild(sawIcon)
-            sawIcon.run(.repeatForever(.sequence([
-                .scale(to: 1.1, duration: 0.5),
-                .scale(to: 1.0, duration: 0.5)
+            sawIcon.run(SKAction.repeatForever(SKAction.sequence([
+                SKAction.scale(to: 1.1, duration: 0.5),
+                SKAction.scale(to: 1.0, duration: 0.5)
             ])))
         } else {
             body.childNode(withName: "saw_indicator")?.removeFromParent()
@@ -264,25 +264,25 @@ class ShotgunNode: SKNode {
         hammer.run(hammerBack)
         
         let slideBack = SKAction.moveBy(x: -45, y: 0, duration: 0.15)
-        slideBack.timingMode = .easeOut
+        slideBack.timingMode = SKActionTimingMode.easeOut
         
         let ejectShell = SKAction.run { [weak self] in
             self?.ejectCurrentShell()
         }
         
         let slideForward = SKAction.moveBy(x: 45, y: 0, duration: 0.12)
-        slideForward.timingMode = .easeIn
+        slideForward.timingMode = SKActionTimingMode.easeIn
         
         let hammerForward = SKAction.rotate(toAngle: 0, duration: 0.08)
         
-        body.run(.sequence([
+        body.run(SKAction.sequence([
             slideBack,
             ejectShell,
             slideForward,
-            .run { self.isAnimating = false }
+            SKAction.run { self.isAnimating = false }
         ]))
         
-        hammer.run(.sequence([.wait(forDuration: 0.27), hammerForward]))
+        hammer.run(SKAction.sequence([SKAction.wait(forDuration: 0.27), hammerForward]))
         
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.4, execute: completion)
     }
@@ -292,24 +292,24 @@ class ShotgunNode: SKNode {
         let shell = shellDisplayNodes[currentIndex]
         
         let eject = SKAction.group([
-            .moveBy(x: CGFloat.random(in: -30...30), y: CGFloat.random(in: 50...90), duration: 0.5),
-            .rotate(byAngle: CGFloat.random(in: -1...1), duration: 0.5),
-            .fadeOut(withDuration: 0.4)
+            SKAction.moveBy(x: CGFloat.random(in: -30...30), y: CGFloat.random(in: 50...90), duration: 0.5),
+            SKAction.rotate(byAngle: CGFloat.random(in: -1...1), duration: 0.5),
+            SKAction.fadeOut(withDuration: 0.4)
         ])
         
-        shell.run(.sequence([eject, .removeFromParent()]))
+        shell.run(SKAction.sequence([eject, SKAction.removeFromParent()]))
         currentIndex += 1
     }
     
     func aimAtSelf(completion: @escaping () -> Void) {
         let rotate = SKAction.rotate(toAngle: -.pi/2 - 0.3, duration: 0.3)
-        rotate.timingMode = .easeInOut
+        rotate.timingMode = SKActionTimingMode.easeInEaseOut
         run(rotate, completion: completion)
     }
     
     func aimAtDealer(completion: @escaping () -> Void) {
         let rotate = SKAction.rotate(toAngle: .pi/2 + 0.3, duration: 0.3)
-        rotate.timingMode = .easeInOut
+        rotate.timingMode = SKActionTimingMode.easeInEaseOut
         run(rotate, completion: completion)
     }
     
@@ -322,25 +322,25 @@ class ShotgunNode: SKNode {
         body.addChild(flash)
         
         let flashSeq = SKAction.sequence([
-            .fadeAlpha(to: 1, duration: 0.01),
-            .wait(forDuration: 0.05),
-            .fadeOut(withDuration: 0.1),
-            .removeFromParent()
+            SKAction.fadeAlpha(to: 1, duration: 0.01),
+            SKAction.wait(forDuration: 0.05),
+            SKAction.fadeOut(withDuration: 0.1),
+            SKAction.removeFromParent()
         ])
         flash.run(flashSeq)
         
         // Recoil
         let recoil = SKAction.sequence([
-            .moveBy(x: -25, y: 0, duration: 0.05),
-            .moveBy(x: 25, y: 0, duration: 0.2)
+            SKAction.moveBy(x: -25, y: 0, duration: 0.05),
+            SKAction.moveBy(x: 25, y: 0, duration: 0.2)
         ])
-        recoil.timingMode = .easeOut
+        recoil.timingMode = SKActionTimingMode.easeOut
         body.run(recoil)
         
         // Hammer strike
-        hammer.run(.sequence([
-            .rotate(toAngle: -.pi/4, duration: 0.02),
-            .rotate(toAngle: 0, duration: 0.08)
+        hammer.run(SKAction.sequence([
+            SKAction.rotate(toAngle: -.pi/4, duration: 0.02),
+            SKAction.rotate(toAngle: 0, duration: 0.08)
         ]))
         
         // Shell casing eject visual
@@ -351,11 +351,11 @@ class ShotgunNode: SKNode {
             body.addChild(casing)
             
             let eject = SKAction.group([
-                .moveBy(x: CGFloat.random(in: 40...80), y: CGFloat.random(in: 20...50), duration: 0.4),
-                .rotate(byAngle: .pi * 2, duration: 0.4),
-                .sequence([.wait(forDuration: 0.3), .fadeOut(withDuration: 0.2)])
+                SKAction.moveBy(x: CGFloat.random(in: 40...80), y: CGFloat.random(in: 20...50), duration: 0.4),
+                SKAction.rotate(byAngle: .pi * 2, duration: 0.4),
+                SKAction.sequence([SKAction.wait(forDuration: 0.3), SKAction.fadeOut(withDuration: 0.2)])
             ])
-            casing.run(.sequence([eject, .removeFromParent()]))
+            casing.run(SKAction.sequence([eject, SKAction.removeFromParent()]))
         }
         
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3, execute: completion)
@@ -372,7 +372,7 @@ class ShotgunNode: SKNode {
     }
     
     func resetRotation() {
-        run(.rotate(toAngle: 0, duration: 0.3))
+        run(SKAction.rotate(toAngle: 0, duration: 0.3))
     }
 }
 
@@ -474,6 +474,7 @@ class DealerNode: SKNode {
             border.fillColor = .clear
             card.addChild(border)
         }
+        
         return container
     }
     
@@ -485,10 +486,10 @@ class DealerNode: SKNode {
         addChild(cards)
         
         let breathe = SKAction.sequence([
-            .scaleY(to: 1.01, duration: 2.5),
-            .scaleY(to: 0.99, duration: 2.5)
+            SKAction.scaleY(to: 1.01, duration: 2.5),
+            SKAction.scaleY(to: 0.99, duration: 2.5)
         ])
-        body.run(.repeatForever(breathe))
+        body.run(SKAction.repeatForever(breathe))
     }
     
     private func startBlinking() {
@@ -502,8 +503,8 @@ class DealerNode: SKNode {
               let rightEye = eyes.childNode(withName: "right_eye") as? SKSpriteNode else { return }
         
         let blinkAction = SKAction.sequence([
-            .scaleY(to: 0.1, duration: 0.08),
-            .scaleY(to: 1.0, duration: 0.08)
+            SKAction.scaleY(to: 0.1, duration: 0.08),
+            SKAction.scaleY(to: 1.0, duration: 0.08)
         ])
         leftEye.run(blinkAction)
         rightEye.run(blinkAction)
@@ -531,21 +532,21 @@ class DealerNode: SKNode {
             eyeColor = 0xFFFFEE; pupilHeight = 16; pupilColor = 0x220044
         case .thinking:
             eyeColor = 0xEEEECC; pupilHeight = 10; pupilColor = 0x440066
-            face.run(.rotate(toAngle: -0.05, duration: 0.3))
+            face.run(SKAction.rotate(toAngle: -0.05, duration: 0.3))
         case .amused:
             eyeColor = 0xFFEEAA; pupilHeight = 6; pupilColor = 0x660022
             wiggleCards()
         case .annoyed:
             eyeColor = 0xFFCCCC; pupilHeight = 4; pupilColor = 0x880000
-            face.run(.rotate(toAngle: 0.08, duration: 0.2))
+            face.run(SKAction.rotate(toAngle: 0.08, duration: 0.2))
         case .surprised:
             eyeColor = 0xFFFFFF; pupilHeight = 20; pupilColor = 0x000044
-            leftEye.run(.scale(to: 1.2, duration: 0.1))
-            rightEye.run(.scale(to: 1.2, duration: 0.1))
+            leftEye.run(SKAction.scale(to: 1.2, duration: 0.1))
+            rightEye.run(SKAction.scale(to: 1.2, duration: 0.1))
         case .dead:
             eyeColor = 0x333333; pupilHeight = 2; pupilColor = 0x111111
-            face.run(.rotate(toAngle: 0.3, duration: 0.5))
-            hat.run(.moveBy(x: 10, y: -30, duration: 0.5))
+            face.run(SKAction.rotate(toAngle: 0.3, duration: 0.5))
+            hat.run(SKAction.moveBy(x: 10, y: -30, duration: 0.5))
         }
         
         let eyeTex = SKTexture.fromColor(eyeColor, size: leftEye.size)
@@ -556,18 +557,18 @@ class DealerNode: SKNode {
         leftPupil.texture = pupilTex
         rightPupil.texture = pupilTex
         
-        leftPupil.run(.resize(toHeight: pupilHeight, duration: 0.2))
-        rightPupil.run(.resize(toHeight: pupilHeight, duration: 0.2))
+        leftPupil.run(SKAction.resize(toHeight: pupilHeight, duration: 0.2))
+        rightPupil.run(SKAction.resize(toHeight: pupilHeight, duration: 0.2))
     }
     
     private func wiggleCards() {
         for (i, card) in cards.children.enumerated() {
             let delay = Double(i) * 0.05
-            card.run(.sequence([
-                .wait(forDuration: delay),
-                .rotate(byAngle: 0.15, duration: 0.15),
-                .rotate(byAngle: -0.3, duration: 0.3),
-                .rotate(byAngle: 0.15, duration: 0.15)
+            card.run(SKAction.sequence([
+                SKAction.wait(forDuration: delay),
+                SKAction.rotate(byAngle: 0.15, duration: 0.15),
+                SKAction.rotate(byAngle: -0.3, duration: 0.3),
+                SKAction.rotate(byAngle: 0.15, duration: 0.15)
             ]))
         }
     }
@@ -578,13 +579,13 @@ class DealerNode: SKNode {
         
         let targetPos = convert(position, from: parent!)
         let fly = SKAction.group([
-            .move(to: targetPos, duration: 0.4),
-            .rotate(byAngle: .pi * 1.5, duration: 0.4),
-            .scale(to: 0.6, duration: 0.4)
+            SKAction.move(to: targetPos, duration: 0.4),
+            SKAction.rotate(byAngle: .pi * 1.5, duration: 0.4),
+            SKAction.scale(to: 0.6, duration: 0.4)
         ])
-        fly.timingMode = .easeOut
+        fly.timingMode = SKActionTimingMode.easeOut
         
-        card.run(.sequence([fly, .run(completion)]))
+        card.run(SKAction.sequence([fly, SKAction.run(completion)]))
     }
     
     func speechBubble(_ text: String) -> SKNode {
@@ -624,13 +625,14 @@ class DealerNode: SKNode {
         bubble.addChild(bg)
         bubble.position = CGPoint(x: 0, y: 140)
         
+        // Animate in
         bubble.setScale(0)
-        bubble.run(.sequence([
-            .scale(to: 1.1, duration: 0.2),
-            .scale(to: 1.0, duration: 0.1),
-            .wait(forDuration: 2.5),
-            .fadeOut(withDuration: 0.3),
-            .removeFromParent()
+        bubble.run(SKAction.sequence([
+            SKAction.scale(to: 1.1, duration: 0.2),
+            SKAction.scale(to: 1.0, duration: 0.1),
+            SKAction.wait(forDuration: 2.5),
+            SKAction.fadeOut(withDuration: 0.3),
+            SKAction.removeFromParent()
         ]))
         
         return bubble
@@ -673,12 +675,14 @@ class ItemDisplayNode: SKSpriteNode {
         zPosition = 40
         isUserInteractionEnabled = isPlayer && !item.used
         
+        // Border
         border.strokeColor = SKColor(hex: item.type.color, alpha: item.used ? 0.3 : 0.8)
         border.lineWidth = item.used ? 1 : 2
         border.fillColor = .clear
         border.zPosition = -1
         addChild(border)
         
+        // Icon
         iconLabel.fontName = "SF Pro Text"
         iconLabel.fontSize = 28
         iconLabel.fontColor = SKColor(hex: item.type.color)
@@ -687,6 +691,7 @@ class ItemDisplayNode: SKSpriteNode {
         iconLabel.zPosition = 1
         addChild(iconLabel)
         
+        // Name
         nameLabel.fontName = "Menlo-Bold"
         nameLabel.fontSize = 9
         nameLabel.fontColor = SKColor(white: 0.9, alpha: item.used ? 0.4 : 1)
@@ -695,8 +700,10 @@ class ItemDisplayNode: SKSpriteNode {
         nameLabel.zPosition = 1
         addChild(nameLabel)
         
+        // Used overlay
         if item.used { addUsedOverlay() }
         
+        // Glow
         if !item.used && isPlayer {
             let glow = SKShapeNode(rectOf: CGSize(width: size.width + 8, height: size.height + 8), cornerRadius: 12)
             glow.strokeColor = SKColor(hex: item.type.color, alpha: 0.5)
@@ -704,9 +711,9 @@ class ItemDisplayNode: SKSpriteNode {
             glow.fillColor = .clear
             glow.zPosition = -2
             addChild(glow)
-            glow.run(.repeatForever(.sequence([
-                .fadeAlpha(to: 0.3, duration: 1),
-                .fadeAlpha(to: 0.8, duration: 1)
+            glow.run(SKAction.repeatForever(SKAction.sequence([
+                SKAction.fadeAlpha(to: 0.3, duration: 1),
+                SKAction.fadeAlpha(to: 0.8, duration: 1)
             ])))
         }
     }
@@ -734,18 +741,18 @@ class ItemDisplayNode: SKSpriteNode {
         iconLabel.fontColor = SKColor(hex: item.type.color, alpha: 0.4)
         nameLabel.fontColor = SKColor(white: 0.9, alpha: 0.4)
         isUserInteractionEnabled = false
-        run(.sequence([.scale(to: 0.9, duration: 0.1), .scale(to: 1.0, duration: 0.1)]))
+        run(SKAction.sequence([SKAction.scale(to: 0.9, duration: 0.1), SKAction.scale(to: 1.0, duration: 0.1)]))
     }
     
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
         guard !item.used else { return }
-        run(.scale(to: 1.1, duration: 0.1))
+        run(SKAction.scale(to: 1.1, duration: 0.1))
         border.lineWidth = 3
     }
     
     override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
         guard !item.used else { return }
-        run(.scale(to: 1.0, duration: 0.1))
+        run(SKAction.scale(to: 1.0, duration: 0.1))
         border.lineWidth = 2
         
         if let touch = touches.first {
@@ -757,7 +764,7 @@ class ItemDisplayNode: SKSpriteNode {
     }
     
     override func touchesCancelled(_ touches: Set<UITouch>, with event: UIEvent?) {
-        run(.scale(to: 1.0, duration: 0.1))
+        run(SKAction.scale(to: 1.0, duration: 0.1))
         border.lineWidth = 2
     }
 }
