@@ -324,7 +324,7 @@ class GameOverTouchHandler: NSObject {
         overlay.isUserInteractionEnabled = true
     }
     
-    override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
+    func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
         guard let touch = touches.first else { return }
         let location = touch.location(in: overlay)
         let node = overlay.atPoint(location)
