@@ -344,11 +344,11 @@ class GameOverTouchHandler: NSObject {
         let node = overlay.atPoint(location)
         
         if node.name == "retry" {
-            overlay.run(.fadeOut(withDuration: 0.2)) {
+            overlay.run(.fadeOut(withDuration: 0.2)) { @Sendable in
                 self.scene.handleRetry()
             }
         } else if node.name == "menu" {
-            overlay.run(.fadeOut(withDuration: 0.2)) {
+            overlay.run(.fadeOut(withDuration: 0.2)) { @Sendable in
                 self.scene.handleMenu()
             }
         }
