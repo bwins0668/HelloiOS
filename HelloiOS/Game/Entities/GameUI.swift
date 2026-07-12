@@ -325,8 +325,6 @@ class MagnifierOverlay: SKNode {
 }
 
 // MARK: - Game Over Touch Handler
-
-@MainActor
 class GameOverTouchHandler: NSObject {
     let overlay: SKNode
     let scene: GameScene
@@ -355,5 +353,4 @@ class GameOverTouchHandler: NSObject {
             }
         }
     }
-}
 }
