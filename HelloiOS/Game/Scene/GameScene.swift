@@ -1,9 +1,6 @@
 // Game/Scene/GameScene.swift
 import SpriteKit
-import SwiftUI
 import Combine
-
-// All models are defined in GameData.swift - no duplicate definitions here
 
 class GameScene: SKScene {
     // Core nodes
@@ -142,6 +139,14 @@ class GameScene: SKScene {
             self?.showPhoneHint(hint)
         }.store(in: &cancellables)
         
+        gameState.$currentTurn.sink { [weak self] turn in
+            self?.hud.setTurn(turn)
+        }.store(in: &cancellables)
+        
+        gameState.$currentRound.sink { [weak self] round in
+            self?.hud.setRound(round)
+        }.store(in: &cancellables)
+        
         // Notifications
         NotificationCenter.default.publisher(for: .itemTapped).sink { [weak self] notif in
             if let item = notif.object as? Item {
@@ -220,7 +225,7 @@ class GameScene: SKScene {
         let overlay = SKNode()
         overlay.zPosition = 200
         
-        let bg = SKShapeNode(rectOf: CGSize(width: 400, height: 500), cornerRadius: 24)
+        let bg = SKShapeNode(rectOf: CGSize(width: 360, height: 420), cornerRadius: 24)
         bg.fillColor = SKColor(hex: 0x0A030A, alpha: 0.95)
         bg.strokeColor = won ? SKColor(hex: 0x00FF88) : SKColor(hex: 0xFF2244)
         bg.lineWidth = 3
@@ -279,9 +284,37 @@ class GameScene: SKScene {
         let touchHandler = GameOverTouchHandler(overlay: overlay, scene: self, won: won)
         overlay.userData = ["handler": touchHandler]
     }
+    
+    override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
+        if gameState.phase == .gameOver {
+            // Handled by GameOverTouchHandler
+            return
+        }
+        
+        if gameState.phase == .menu {
+            gameState.startNewGame()
+            return
+        }
+        
+        // Dismiss magnifier
+        if let overlay = magnifierOverlay {
+            let loc = touches.first?.location(in: self) ?? .zero
+            if !overlay.contains(loc) {
+                overlay.run(.sequence([.fadeOut(withDuration: 0.2), .removeFromParent()]))
+                magnifierOverlay = nil
+                gameState.magnifierShell = nil
+            }
+        }
+    }
+    
+    private func restartGame() {
+        removeAllChildren()
+        cancellables.removeAll()
+        didMove(to: view!)
+    }
 }
 
-// Touch handler for game over
+// GameOverTouchHandler
 class GameOverTouchHandler: NSObject {
     let overlay: SKNode
     let scene: GameScene
@@ -315,15 +348,14 @@ class GameOverTouchHandler: NSObject {
 // Supporting UI Nodes
 
 class ShellTrackNode: SKNode {
-    private var shellNodes: [SKNode] = []
+    private var shellNodes: [ShellDisplayNode] = []
     
     func setShells(_ shells: [ShellType], currentIndex: Int) {
-        // Remove old
         shellNodes.forEach { $0.removeFromParent() }
         shellNodes.removeAll()
         
         let spacing: CGFloat = 36
-        let totalWidth = CGFloat(shells.count - 1) * spacing
+        let totalWidth = CGFloat(max(shells.count - 1, 0)) * spacing
         let startX = -totalWidth / 2
         
         for (i, shell) in shells.enumerated() {
@@ -333,34 +365,31 @@ class ShellTrackNode: SKNode {
             addChild(node)
             shellNodes.append(node)
         }
+        
         setCurrentIndex(currentIndex)
     }
     
     func setCurrentIndex(_ index: Int) {
         for (i, node) in shellNodes.enumerated() {
-            if let display = node as? ShellDisplayNode {
-                display.setState(
-                    isCurrent: i == index,
-                    isPast: i < index,
-                    known: nil // updated by shotgun
-                )
-            }
+            let isCurrent = i == index
+            let isPast = i < index
+            node.setState(isCurrent: isCurrent, isPast: isPast, known: nil)
         }
     }
 }
 
 class ShellDisplayNode: SKNode {
-    private let shell: SKSpriteNode
+    private let type: ShellType
+    private let body: SKSpriteNode
     private let primer: SKSpriteNode
     private let glow: SKSpriteNode?
     private let indexLabel: SKLabelNode
-    private var type: ShellType
     
     init(type: ShellType, index: Int) {
         self.type = type
         
         let shellColor = type == .live ? 0xFF2222 : 0xDDDD33
-        self.shell = SKSpriteNode(texture: SKTexture.fromColor(shellColor, size: CGSize(width: 16, height: 32)))
+        self.body = SKSpriteNode(texture: SKTexture.fromColor(shellColor, size: CGSize(width: 16, height: 32)))
         
         let primerColor = type == .live ? 0xAA0000 : 0xAAAA00
         self.primer = SKSpriteNode(texture: SKTexture.fromColor(primerColor, size: CGSize(width: 12, height: 6)))
@@ -383,7 +412,7 @@ class ShellDisplayNode: SKNode {
         
         super.init()
         
-        addChild(shell)
+        addChild(body)
         addChild(primer)
         addChild(indexLabel)
         if let glow = glow { addChild(glow) }
@@ -392,34 +421,32 @@ class ShellDisplayNode: SKNode {
     }
     
     func setState(isCurrent: Bool, isPast: Bool, known: ShellType?) {
-        let showType = known ?? type
-        
         if isPast {
-            shell.alpha = 0.3
+            body.alpha = 0.3
             primer.alpha = 0.3
             glow?.alpha = 0
             run(.scale(to: 0.7, duration: 0.2))
         } else if isCurrent {
-            shell.alpha = 1
+            body.alpha = 1
             primer.alpha = 1
             run(.scale(to: 1.1, duration: 0.2))
             
-            if let known = known {
-                let color = known == .live ? 0xFF2222 : 0xDDDD33
-                shell.texture = SKTexture.fromColor(color, size: shell.size)
-                let primerColor = known == .live ? 0xAA0000 : 0xAAAA00
+            if known != nil {
+                let color = known! == .live ? 0xFF2222 : 0xDDDD33
+                body.texture = SKTexture.fromColor(color, size: body.size)
+                let primerColor = known! == .live ? 0xAA0000 : 0xAAAA00
                 primer.texture = SKTexture.fromColor(primerColor, size: primer.size)
                 
-                // Pulse
-                run(.repeatForever(.sequence([
-                    .scale(to: 1.15, duration: 0.5),
-                    .scale(to: 1.0, duration: 0.5)
-                ])), withKey: "pulse")
+                let pulseAction = SKAction.repeatForever(SKAction.sequence([
+                    SKAction.scale(to: 1.15, duration: 0.5),
+                    SKAction.scale(to: 1.0, duration: 0.5)
+                ]))
+                run(pulseAction, withKey: "pulse")
             } else {
                 removeAction(forKey: "pulse")
             }
         } else {
-            shell.alpha = 0.6
+            body.alpha = 0.6
             primer.alpha = 0.6
             run(.scale(to: 0.9, duration: 0.2))
         }
@@ -473,18 +500,16 @@ class ItemDisplayNode: SKSpriteNode {
     private let iconLabel: SKLabelNode
     private let nameLabel: SKLabelNode
     private let border: SKShapeNode
-    private var usedOverlay: SKNode?
     
     init(item: Item, isPlayer: Bool, size: CGSize = CGSize(width: 70, height: 90)) {
         self.item = item
         self.isPlayer = isPlayer
         
-        let bgTexture = SKTexture.fromColor(0x1A0A1A, size: size)
         self.iconLabel = SKLabelNode(text: item.type.iconName)
         self.nameLabel = SKLabelNode(text: item.type.displayName)
         
-        let borderRect = CGRect(origin: CGPoint(x: -size.width/2, y: -size.height/2), size: size)
-        self.border = SKShapeNode(rect: borderRect, cornerRadius: 8)
+        let bgTexture = SKTexture.fromColor(0x1A0A1A, size: size)
+        self.border = SKShapeNode(rectOf: size, cornerRadius: 8)
         
         super.init(texture: bgTexture, color: .clear, size: size)
         
@@ -556,7 +581,6 @@ class ItemDisplayNode: SKSpriteNode {
         usedLabel.fontColor = .gray
         usedLabel.verticalAlignmentMode = .center
         overlay.addChild(usedLabel)
-        usedOverlay = overlay
     }
     
     func markUsed() {
@@ -596,8 +620,8 @@ class ItemDisplayNode: SKSpriteNode {
 }
 
 class HUDNode: SKNode {
-    private let playerLivesNode = SKNode()
     private let dealerLivesNode = SKNode()
+    private let playerLivesNode = SKNode()
     private let roundLabel = SKLabelNode()
     private let shellsLabel = SKLabelNode()
     private let turnLabel = SKLabelNode()
@@ -611,10 +635,17 @@ class HUDNode: SKNode {
         dealerLivesNode.position = CGPoint(x: 0, y: 40)
         addChild(dealerLivesNode)
         
+        let dealerTitle = SKLabelNode(text: "DEALER")
+        dealerTitle.fontName = "Menlo"
+        dealerTitle.fontSize = 10
+        dealerTitle.fontColor = SKColor(hex: 0xAA44AA)
+        dealerTitle.position = CGPoint(x: 0, y: -22)
+        dealerLivesNode.addChild(dealerTitle)
+        
         // Round info
         roundLabel.fontName = "Menlo-Bold"
         roundLabel.fontSize = 12
-        roundLabel.fontColor = SKColor(hex: 0xAA44FF)
+        roundLabel.fontColor = SKColor(hex: 0xFFB800)
         roundLabel.position = CGPoint(x: -150, y: 10)
         addChild(roundLabel)
         
@@ -636,10 +667,17 @@ class HUDNode: SKNode {
         playerLivesNode.position = CGPoint(x: 0, y: -50)
         addChild(playerLivesNode)
         
+        let playerTitle = SKLabelNode(text: "YOU")
+        playerTitle.fontName = "Menlo"
+        playerTitle.fontSize = 10
+        playerTitle.fontColor = SKColor(hex: 0x00FF88)
+        playerTitle.position = CGPoint(x: 0, y: -22)
+        playerLivesNode.addChild(playerTitle)
+        
         // Saw indicator
         sawIndicator.fontName = "Menlo-Bold"
         sawIndicator.fontSize = 12
-        sawIndicator.fontColor = SKColor(hex: 0xFF4444)
+        sawIndicator.fontColor = SKColor(hex: 0xFF2244)
         sawIndicator.position = CGPoint(x: 0, y: -80)
         sawIndicator.alpha = 0
         addChild(sawIndicator)
@@ -649,22 +687,22 @@ class HUDNode: SKNode {
     
     func updateLives(player: (Int, Int), dealer: (Int, Int)) {
         // Dealer
-        dealerLivesNode.removeAllChildren()
+        dealerLivesNode.children.filter { $0 is HeartNode }.forEach { $0.removeFromParent() }
         let dSpacing: CGFloat = 30
         let dStartX = -CGFloat(dealer.1 - 1) * dSpacing / 2
         for i in 0..<dealer.1 {
-            let heart = HeartNode(filled: i < dealer.0, color: SKColor(hex: 0xFF2244))
-            heart.position = CGPoint(x: dStartX + CGFloat(i) * dSpacing, y: 0)
+            let heart = HeartNode(filled: i < dealer.0, color: 0xFF2244)
+            heart.position = CGPoint(x: dStartX + CGFloat(i) * dSpacing, y: 22)
             dealerLivesNode.addChild(heart)
         }
         
         // Player
-        playerLivesNode.removeAllChildren()
+        playerLivesNode.children.filter { $0 is HeartNode }.forEach { $0.removeFromParent() }
         let pSpacing: CGFloat = 30
         let pStartX = -CGFloat(player.1 - 1) * pSpacing / 2
         for i in 0..<player.1 {
-            let heart = HeartNode(filled: i < player.0, color: SKColor(hex: 0x00FF88))
-            heart.position = CGPoint(x: pStartX + CGFloat(i) * pSpacing, y: 0)
+            let heart = HeartNode(filled: i < player.0, color: 0x00FF88)
+            heart.position = CGPoint(x: pStartX + CGFloat(i) * pSpacing, y: -22)
             playerLivesNode.addChild(heart)
         }
     }
@@ -735,7 +773,6 @@ class LogNode: SKNode {
     
     override init() {
         super.init()
-        zPosition = 50
     }
     
     required init?(coder: NSCoder) { fatalError() }
@@ -843,7 +880,7 @@ class MagnifierOverlay: SKNode {
     }
 }
 
-// Extension to bridge SwiftUI Color to SKColor
+// SKColor helper
 extension SKColor {
     convenience init(hex: UInt32, alpha: CGFloat = 1) {
         let r = CGFloat((hex >> 16) & 0xFF) / 255
