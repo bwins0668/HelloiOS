@@ -118,9 +118,9 @@ private final class RouletteEngine: ObservableObject {
     @Published var phoneHint: String?
 
     // Round config
-    private var round = 1
-    private let maxRounds = 3
-    private var shellsThisRound: Int = 0
+        @Published var round = 1
+        private let maxRounds = 3
+        private var shellsThisRound: Int = 0
 
     // AI
     private let rng = SystemRandomNumberGenerator()
