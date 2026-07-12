@@ -313,7 +313,7 @@ class GameScene: SKScene {
         }
     }
     
-    private func restartGame() {
+    fileprivate func restartGame() {
         removeAllChildren()
         cancellables.removeAll()
         didMove(to: view!)
