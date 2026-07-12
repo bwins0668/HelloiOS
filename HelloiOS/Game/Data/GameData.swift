@@ -403,7 +403,7 @@ class GameState: ObservableObject {
         case .adrenaline:
             let available = dealerItems.enumerated().filter { !$0.element.used }.map { $0.offset }
             if let idx = available.randomElement() {
-                let stolen = dealerItems[idx]
+                var stolen = dealerItems[idx]
                 stolen.used = true
                 playerItems.append(stolen)
                 log("💉 肾上腺素：偷走恶魔的 \(stolen.type.displayName)")
@@ -519,7 +519,7 @@ class GameState: ObservableObject {
         case .adrenaline:
             let available = playerItems.enumerated().filter { !$0.element.used }.map { $0.offset }
             if let pIdx = available.randomElement() {
-                let stolen = playerItems[pIdx]
+                var stolen = playerItems[pIdx]
                 stolen.used = true
                 dealerItems.append(stolen)
                 log("💉 恶魔用肾上腺素：偷走你的 \(stolen.type.displayName)")
