@@ -345,11 +345,11 @@ class GameOverTouchHandler: NSObject {
         
         if node.name == "retry" {
             overlay.run(.fadeOut(withDuration: 0.2)) {
-                self.scene.handleRetry()
+                self.scene.restartGame()
             }
         } else if node.name == "menu" {
             overlay.run(.fadeOut(withDuration: 0.2)) {
-                self.scene.handleMenu()
+                self.scene.gameState.phase = .menu
             }
         }
     }

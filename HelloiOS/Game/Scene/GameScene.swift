@@ -82,7 +82,6 @@ class GameScene: SKScene {
     }
     
     private func bindState() {
-        // Phase changes
         gameState.$phase.sink { [weak self] phase in
             self?.onPhaseChange(phase)
         }.store(in: &cancellables)
@@ -318,9 +317,5 @@ class GameScene: SKScene {
         removeAllChildren()
         cancellables.removeAll()
         didMove(to: view!)
-    }
-    
-    func restartGamePublic() {
-        restartGame()
     }
 }
