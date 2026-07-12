@@ -351,8 +351,9 @@ class GameOverTouchHandler: NSObject {
             }
         } else if node.name == "menu" {
             overlay.run(.fadeOut(withDuration: 0.2)) {
-                self.scene.gameState.phase = .menu
+                self.scene.handleMenu()
             }
         }
     }
+}
 }

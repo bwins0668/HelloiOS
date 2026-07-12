@@ -320,3 +320,13 @@ class GameScene: SKScene {
         didMove(to: view!)
     }
 }
+
+extension GameScene {
+    func handleRetry() {
+        restartGame()
+    }
+    
+    func handleMenu() {
+        gameState.phase = .menu
+    }
+}
