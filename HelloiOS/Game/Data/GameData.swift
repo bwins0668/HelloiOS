@@ -219,7 +219,7 @@ class GameState: ObservableObject {
     @Published var log: [String] = []
     @Published var magnifierShell: ShellType? = nil
     @Published var phoneHint: String? = nil
-    @Published var dealerMood: DealerNode.Mood = .neutral
+    @Published var dealerMood: DealerMood = .neutral
     @Published var dealerSpeech: String? = nil
     
     enum GamePhase: Equatable {
@@ -573,12 +573,5 @@ class GameState: ObservableObject {
     }
 }
 
-// MARK: - DealerNode.Mood (forward reference)
-
-class DealerNode: SKNode {
-    enum Mood { case neutral, thinking, amused, annoyed, surprised, dead }
-    override init() { super.init() }
-    required init?(coder: NSCoder) { fatalError() }
-    func setMood(_ mood: Mood) {}
-    func speechBubble(_ text: String) -> SKNode { return SKNode() }
-}
+// Forward declarations for UI
+enum DealerMood { case neutral, thinking, amused, annoyed, surprised, dead }

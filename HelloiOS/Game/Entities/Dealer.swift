@@ -10,12 +10,8 @@ class DealerNode: SKNode {
     private let cards: SKNode
     
     // Animation state
-    var currentMood: Mood = .neutral
+    var currentMood: DealerMood = .neutral
     private var blinkTimer: Timer?
-    
-    enum Mood {
-        case neutral, thinking, amused, annoyed, surprised, dead
-    }
     
     override init() {
         self.body = DealerNode.makeBody()
@@ -147,12 +143,12 @@ class DealerNode: SKNode {
     
     // MARK: - Mood Expressions
     
-    func setMood(_ mood: Mood) {
+    func setMood(_ mood: DealerMood) {
         currentMood = mood
         applyMood(mood)
     }
     
-    private func applyMood(_ mood: Mood) {
+    private func applyMood(_ mood: DealerMood) {
         guard let leftEye = eyes.childNode(withName: "left_eye") as? SKSpriteNode,
               let rightEye = eyes.childNode(withName: "right_eye") as? SKSpriteNode,
               let leftPupil = leftEye.childNode(withName: "left_pupil") as? SKSpriteNode,
@@ -164,34 +160,22 @@ class DealerNode: SKNode {
         
         switch mood {
         case .neutral:
-            eyeColor = 0xFFFFEE
-            pupilHeight = 16
-            pupilColor = 0x220044
+            eyeColor = 0xFFFFEE; pupilHeight = 16; pupilColor = 0x220044
         case .thinking:
-            eyeColor = 0xEEEECC
-            pupilHeight = 10
-            pupilColor = 0x440066
+            eyeColor = 0xEEEECC; pupilHeight = 10; pupilColor = 0x440066
             face.run(.rotate(toAngle: -0.05, duration: 0.3))
         case .amused:
-            eyeColor = 0xFFEEAA
-            pupilHeight = 6
-            pupilColor = 0x660022
+            eyeColor = 0xFFEEAA; pupilHeight = 6; pupilColor = 0x660022
             wiggleCards()
         case .annoyed:
-            eyeColor = 0xFFCCCC
-            pupilHeight = 4
-            pupilColor = 0x880000
+            eyeColor = 0xFFCCCC; pupilHeight = 4; pupilColor = 0x880000
             face.run(.rotate(toAngle: 0.08, duration: 0.2))
         case .surprised:
-            eyeColor = 0xFFFFFF
-            pupilHeight = 20
-            pupilColor = 0x000044
+            eyeColor = 0xFFFFFF; pupilHeight = 20; pupilColor = 0x000044
             leftEye.run(.scale(to: 1.2, duration: 0.1))
             rightEye.run(.scale(to: 1.2, duration: 0.1))
         case .dead:
-            eyeColor = 0x333333
-            pupilHeight = 2
-            pupilColor = 0x111111
+            eyeColor = 0x333333; pupilHeight = 2; pupilColor = 0x111111
             face.run(.rotate(toAngle: 0.3, duration: 0.5))
             hat.run(.moveBy(x: 10, y: -30, duration: 0.5))
         }
@@ -293,146 +277,9 @@ class DealerNode: SKNode {
     }
 }
 
-// Game/Entities/ItemNode.swift - Uses Item from GameData.swift
-import SpriteKit
-
-class ItemNode: SKSpriteNode {
-    let item: Item
-    private let icon: SKLabelNode
-    private let nameLabel: SKLabelNode
-    private var isSelected: Bool = false
-    
-    init(item: Item, size: CGSize = CGSize(width: 70, height: 90)) {
-        self.item = item
-        
-        self.icon = SKLabelNode(text: String(item.type.iconName.first!))
-        self.nameLabel = SKLabelNode(text: item.type.displayName)
-        
-        let cardTexture = SKTexture.fromColor(0x1A0A1A, size: size)
-        super.init(texture: cardTexture, color: .clear, size: size)
-        
-        setup()
-    }
-    
-    required init?(coder: NSCoder) { fatalError() }
-    
-    private func setup() {
-        name = "item_\(item.id.uuidString)"
-        zPosition = 40
-        isUserInteractionEnabled = true
-        
-        // Border
-        let border = SKShapeNode(rectOf: size, cornerRadius: 8)
-        border.strokeColor = SKColor(hex: item.type.color, alpha: item.used ? 0.3 : 0.8)
-        border.lineWidth = item.used ? 1 : 2
-        border.fillColor = .clear
-        border.zPosition = -1
-        addChild(border)
-        
-        // Icon
-        icon.fontName = "SF Pro Text"
-        icon.fontSize = 28
-        icon.fontColor = SKColor(hex: item.type.color)
-        icon.verticalAlignmentMode = .center
-        icon.position = CGPoint(x: 0, y: 12)
-        icon.zPosition = 1
-        addChild(icon)
-        
-        // Name
-        nameLabel.fontName = "Menlo-Bold"
-        nameLabel.fontSize = 9
-        nameLabel.fontColor = SKColor(white: 0.9, alpha: item.used ? 0.4 : 1)
-        nameLabel.verticalAlignmentMode = .center
-        nameLabel.position = CGPoint(x: 0, y: -28)
-        nameLabel.zPosition = 1
-        addChild(nameLabel)
-        
-        // Used overlay
-        if item.used {
-            let overlay = SKShapeNode(rectOf: CGSize(width: size.width - 4, height: size.height - 4), cornerRadius: 6)
-            overlay.fillColor = SKColor(white: 0, alpha: 0.6)
-            overlay.strokeColor = .clear
-            overlay.zPosition = 2
-            addChild(overlay)
-            
-            let usedLabel = SKLabelNode(text: "已用")
-            usedLabel.fontName = "Menlo-Bold"
-            usedLabel.fontSize = 11
-            usedLabel.fontColor = .gray
-            usedLabel.verticalAlignmentMode = .center
-            overlay.addChild(usedLabel)
-        }
-        
-        // Glow if special
-        if !item.used {
-            let glow = SKShapeNode(rectOf: CGSize(width: size.width + 8, height: size.height + 8), cornerRadius: 12)
-            glow.strokeColor = SKColor(hex: item.type.color, alpha: 0.5)
-            glow.lineWidth = 3
-            glow.fillColor = .clear
-            glow.zPosition = -2
-            glow.run(.repeatForever(.sequence([
-                .fadeAlpha(to: 0.3, duration: 1),
-                .fadeAlpha(to: 0.8, duration: 1)
-            ])))
-            addChild(glow)
-        }
-    }
-    
-    func setSelected(_ selected: Bool) {
-        isSelected = selected
-        let scale: CGFloat = selected ? 1.1 : 1.0
-        let borderWidth: CGFloat = selected ? 3 : 2
-        run(.scale(to: scale, duration: 0.15))
-        
-        if let border = children.first(where: { $0 is SKShapeNode }) as? SKShapeNode {
-            border.lineWidth = borderWidth
-        }
-    }
-    
-    func markUsed() {
-        item.used = true
-        let overlay = SKShapeNode(rectOf: CGSize(width: size.width - 4, height: size.height - 4), cornerRadius: 6)
-        overlay.fillColor = SKColor(white: 0, alpha: 0.6)
-        overlay.strokeColor = .clear
-        overlay.zPosition = 2
-        addChild(overlay)
-        
-        let usedLabel = SKLabelNode(text: "已用")
-        usedLabel.fontName = "Menlo-Bold"
-        usedLabel.fontSize = 11
-        usedLabel.fontColor = .gray
-        usedLabel.verticalAlignmentMode = .center
-        overlay.addChild(usedLabel)
-        
-        run(.sequence([
-            .scale(to: 0.9, duration: 0.1),
-            .scale(to: 1.0, duration: 0.1)
-        ]))
-    }
-    
-    // Touch handling
-    override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
-        guard !item.used else { return }
-        setSelected(true)
-    }
-    
-    override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
-        guard !item.used else { return }
-        setSelected(false)
-        
-        if let touch = touches.first {
-            let location = touch.location(in: self)
-            if self.contains(location) {
-                NotificationCenter.default.post(name: .itemTapped, object: item)
-            }
-        }
-    }
-    
-    override func touchesCancelled(_ touches: Set<UITouch>, with event: UIEvent?) {
-        setSelected(false)
-    }
-}
-
 extension Notification.Name {
     static let itemTapped = Notification.Name("itemTapped")
+    static let shootSelf = Notification.Name("shootSelf")
+    static let shootDealer = Notification.Name("shootDealer")
+    static let discardItem = Notification.Name("discardItem")
 }
