@@ -290,11 +290,7 @@ class GameScene: SKScene {
             let node = atPoint(location)
             
             if node.name == "retry" {
-                run(SKAction.sequence([
-                    SKAction.run { self.showGameOver() },
-                    SKAction.run { self.removeAllChildren() },
-                    SKAction.run { self.gameState.startNewGame() }
-                ]))
+                restartGame()
                 return
             } else if node.name == "menu" {
                 gameState.phase = .menu
