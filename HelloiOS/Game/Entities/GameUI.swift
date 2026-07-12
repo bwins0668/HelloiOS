@@ -162,14 +162,8 @@ class HUDNode: SKNode {
         }
     }
     
-    func setRound(_ round: Int, total: Int = 3) {
-        roundLabel.text = "回合 \(round)/\(total)"
-    }
-    
-    func setShellsRemaining(_ count: Int) {
-        shellsLabel.text = "剩余 \(count) 发"
-    }
-    
+    func setRound(_ round: Int, total: Int = 3) { roundLabel.text = "回合 \(round)/\(total)" }
+    func setShellsRemaining(_ count: Int) { shellsLabel.text = "剩余 \(count) 发" }
     func setTurn(_ turn: GameState.Turn) {
         let text = turn == .player ? "▶ 你的回合" : "▶ 恶魔回合"
         let color = turn == .player ? SKColor(hex: 0x00FF88) : SKColor(hex: 0xFF2244)
@@ -177,7 +171,6 @@ class HUDNode: SKNode {
         turnLabel.fontColor = color
         turnLabel.run(.sequence([.scale(to: 1.2, duration: 0.1), .scale(to: 1.0, duration: 0.1)]))
     }
-    
     func setSawActive(_ active: Bool) {
         sawIndicator.text = active ? "🪚 手锯生效 · 伤害×2" : ""
         sawIndicator.run(.sequence([
@@ -228,10 +221,7 @@ class LogNode: SKNode {
     private var logLabels: [SKLabelNode] = []
     private let maxLines = 12
     
-    override init() {
-        super.init()
-    }
-    
+    override init() { super.init() }
     required init?(coder: NSCoder) { fatalError() }
     
     func setLog(_ messages: [String]) {

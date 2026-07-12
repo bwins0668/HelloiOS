@@ -573,5 +573,6 @@ class GameState: ObservableObject {
     }
 }
 
-// Forward declarations for UI
+// MARK: - Dealer Mood
+
 enum DealerMood { case neutral, thinking, amused, annoyed, surprised, dead }
