@@ -319,4 +319,8 @@ class GameScene: SKScene {
         cancellables.removeAll()
         didMove(to: view!)
     }
+    
+    func restartGamePublic() {
+        restartGame()
+    }
 }
