@@ -259,10 +259,11 @@ class ShellDisplayNode: SKNode {
                 let primerColor = known == .live ? 0xAA0000 : 0xAAAA00
                 primer.texture = SKTexture.fromColor(primerColor, size: primer.size)
                 
-                run(.repeatForever(.sequence([
-                    .scale(to: 1.15, duration: 0.5),
-                    .scale(to: 1.0, duration: 0.5)
-                ]), withKey: "pulse")
+                let pulseAction = SKAction.repeatForever(SKAction.sequence([
+                    SKAction.scale(to: 1.15, duration: 0.5),
+                    SKAction.scale(to: 1.0, duration: 0.5)
+                ]))
+                run(pulseAction, withKey: "pulse")
             } else {
                 removeAction(forKey: "pulse")
             }
