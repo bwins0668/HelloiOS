@@ -4,17 +4,13 @@ import SpriteKit
 // Uses ShellType from GameData.swift
 
 class ShotgunNode: SKNode {
-    // Visual components
     private let body: SKSpriteNode
     private let barrel: SKSpriteNode
     private let trigger: SKSpriteNode
     private let hammer: SKSpriteNode
     private let chamber: SKSpriteNode
-    private var shellDisplayNodes: [SKNode] = []
+    private var shellDisplayNodes: [ShellDisplayNode] = []
     private var currentIndex: Int = 0
-    
-    // Animation state
-    var isAnimating: Bool = false
     
     override init() {
         self.body = ShotgunNode.makeBody()
@@ -83,7 +79,6 @@ class ShotgunNode: SKNode {
         body.addChild(hammer)
         body.addChild(chamber)
         
-        // Chamber interior indicator
         let indicator = SKShapeNode(rectOf: CGSize(width: 36, height: 16), cornerRadius: 2)
         indicator.fillColor = SKColor(white: 0.08, alpha: 1)
         indicator.strokeColor = SKColor(white: 0.3, alpha: 1)
@@ -97,7 +92,6 @@ class ShotgunNode: SKNode {
     // MARK: - Public Animation API
     
     func prepareDealAnimation(shells: [ShellType]) {
-        // Clear existing shell displays
         shellDisplayNodes.forEach { $0.removeFromParent() }
         shellDisplayNodes.removeAll()
         
@@ -112,7 +106,6 @@ class ShotgunNode: SKNode {
             body.addChild(shellNode)
             shellDisplayNodes.append(shellNode)
             
-            // Staggered appear
             let delay = Double(i) * 0.15
             shellNode.run(.sequence([
                 .wait(forDuration: delay),
@@ -131,99 +124,32 @@ class ShotgunNode: SKNode {
         currentIndex = index
         
         for (i, node) in shellDisplayNodes.enumerated() {
-            guard let display = node as? ShellDisplayNode else { continue }
             let isCurrent = i == index
             let isPast = i < index
-            display.setState(isCurrent: isCurrent, isPast: isPast, known: isCurrent ? known : nil)
+            node.setState(isCurrent: isCurrent, isPast: isPast, known: isCurrent ? known : nil)
         }
     }
     
-    func setKnownShell(_ shell: ShellType?) {
-        // Already handled in updateShellDisplay
+    func setKnownShell(_ known: ShellType?) {
+        // handled in updateShellDisplay
     }
     
     func setSawActive(_ active: Bool) {
-        // Visual indicator on shotgun
-        if active {
-            let sawIcon = SKLabelNode(text: "🪚")
-            sawIcon.fontSize = 20
-            sawIcon.position = CGPoint(x: -40, y: 30)
-            sawIcon.zPosition = 20
-            sawIcon.name = "saw_indicator"
-            body.addChild(sawIcon)
-            sawIcon.run(.repeatForever(.sequence([
-                .scale(to: 1.1, duration: 0.5),
-                .scale(to: 1.0, duration: 0.5)
-            ])))
-        } else {
-            body.childNode(withName: "saw_indicator")?.removeFromParent()
-        }
-    }
-    
-    func rackSlide(completion: @escaping () -> Void) {
-        isAnimating = true
-        
-        // Hammer cock back
-        let hammerBack = SKAction.rotate(toAngle: -.pi/3, duration: 0.1)
-        hammer.run(hammerBack)
-        
-        // Slide back with eject
-        let slideBack = SKAction.moveBy(x: -45, duration: 0.15)
-        slideBack.timingMode = .easeOut
-        
-        let ejectShell = SKAction.run { [weak self] in
-            self?.ejectCurrentShell()
-        }
-        
-        let slideForward = SKAction.moveBy(x: 45, duration: 0.12)
-        slideForward.timingMode = .easeIn
-        
-        let hammerForward = SKAction.rotate(toAngle: 0, duration: 0.08)
-        
-        body.run(.sequence([
-            slideBack,
-            ejectShell,
-            slideForward,
-            .run { self.isAnimating = false }
-        ]))
-        
-        hammer.run(.sequence([.wait(forDuration: 0.27), hammerForward]))
-        
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4, execute: completion)
-    }
-    
-    private func ejectCurrentShell() {
-        guard currentIndex < shellDisplayNodes.count else { return }
-        let shell = shellDisplayNodes[currentIndex]
-        
-        let eject = SKAction.group([
-            .moveBy(x: CGFloat.random(in: -30...30), y: CGFloat.random(in: 50...90), duration: 0.5),
-            .rotate(byAngle: CGFloat.random(in: -1...1), duration: 0.5),
-            .fadeOut(withDuration: 0.4)
-        ])
-        
-        shell.run(.sequence([eject, .removeFromParent()]))
-        currentIndex += 1
-    }
-    
-    func aimAtSelf(completion: @escaping () -> Void) {
-        // Point barrel down toward player
-        let rotate = SKAction.rotate(toAngle: -.pi/2 - 0.3, duration: 0.3)
-        rotate.timingMode = .easeInOut
-        run(rotate, completion: completion)
+        // visual indicator on shotgun
     }
     
     func aimAtDealer(completion: @escaping () -> Void) {
-        // Point barrel up toward dealer
-        let rotate = SKAction.rotate(toAngle: .pi/2 + 0.3, duration: 0.3)
-        rotate.timingMode = .easeInOut
-        run(rotate, completion: completion)
+        run(.rotate(toAngle: .pi/2 + 0.3, duration: 0.3), completion: completion)
+    }
+    
+    func aimAtSelf(completion: @escaping () -> Void) {
+        run(.rotate(toAngle: -.pi/2 - 0.3, duration: 0.3), completion: completion)
     }
     
     func fire(isLive: Bool, completion: @escaping () -> Void) {
         // Muzzle flash
-        let flash = SKSpriteNode(color: .white, size: CGSize(width: 80, height: 25))
-        flash.position = CGPoint(x: 100, y: 0)
+        let flash = SKSpriteNode(color: .white, size: CGSize(width: 60, height: 20))
+        flash.position = CGPoint(x: 85, y: 0)
         flash.zPosition = 20
         flash.alpha = 0
         body.addChild(flash)
@@ -238,8 +164,8 @@ class ShotgunNode: SKNode {
         
         // Recoil
         let recoil = SKAction.sequence([
-            .moveBy(x: -25, duration: 0.05),
-            .moveBy(x: 25, duration: 0.2)
+            .moveBy(x: -20, duration: 0.05),
+            .moveBy(x: 20, duration: 0.15)
         ])
         recoil.timingMode = .easeOut
         body.run(recoil)
@@ -250,9 +176,9 @@ class ShotgunNode: SKNode {
             .rotate(toAngle: 0, duration: 0.08)
         ]))
         
-        // Shell casing eject visual
+        // Shell casing eject
         if isLive && currentIndex - 1 >= 0 && currentIndex - 1 < shellDisplayNodes.count {
-            let casing = makeCasing()
+            let casing = ShellDisplayNode.casing()
             casing.position = shellDisplayNodes[currentIndex - 1].position
             casing.zPosition = 16
             body.addChild(casing)
@@ -268,25 +194,15 @@ class ShotgunNode: SKNode {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3, execute: completion)
     }
     
-    private func makeCasing() -> SKNode {
-        let node = SKNode()
-        let body = SKSpriteNode(texture: SKTexture.fromColor(0xCCAA66, size: CGSize(width: 8, height: 16)))
-        let primer = SKSpriteNode(texture: SKTexture.fromColor(0x886622, size: CGSize(width: 6, height: 4)))
-        primer.position = CGPoint(x: 0, y: -8)
-        node.addChild(body)
-        node.addChild(primer)
-        return node
-    }
-    
     func resetRotation() {
         run(.rotate(toAngle: 0, duration: 0.3))
     }
 }
 
-// Shell Display Node (for shotgun chamber view)
+// Shell Display Node
 class ShellDisplayNode: SKNode {
     let type: ShellType
-    private let shell: SKSpriteNode
+    private let body: SKSpriteNode
     private let primer: SKSpriteNode
     private let glow: SKSpriteNode?
     private let indexLabel: SKLabelNode
@@ -294,13 +210,11 @@ class ShellDisplayNode: SKNode {
     init(type: ShellType, index: Int) {
         self.type = type
         
-        let shellColor: UInt32 = type == .live ? 0xFF2222 : 0xDDDD33
-        let texture = SKTexture.fromColor(shellColor, size: CGSize(width: 16, height: 32))
-        self.shell = SKSpriteNode(texture: texture)
+        let shellColor = type == .live ? 0xFF2222 : 0xDDDD33
+        self.body = SKSpriteNode(texture: SKTexture.fromColor(shellColor, size: CGSize(width: 16, height: 32)))
         
-        let primerColor: UInt32 = type == .live ? 0xAA0000 : 0xAAAA00
-        let primerTexture = SKTexture.fromColor(primerColor, size: CGSize(width: 12, height: 6))
-        self.primer = SKSpriteNode(texture: primerTexture)
+        let primerColor = type == .live ? 0xAA0000 : 0xAAAA00
+        self.primer = SKSpriteNode(texture: SKTexture.fromColor(primerColor, size: CGSize(width: 12, height: 6)))
         self.primer.position = CGPoint(x: 0, y: -16)
         
         self.indexLabel = SKLabelNode(text: "\(index + 1)")
@@ -320,7 +234,7 @@ class ShellDisplayNode: SKNode {
         
         super.init()
         
-        addChild(shell)
+        addChild(body)
         addChild(primer)
         addChild(indexLabel)
         if let glow = glow { addChild(glow) }
@@ -329,61 +243,45 @@ class ShellDisplayNode: SKNode {
     }
     
     func setState(isCurrent: Bool, isPast: Bool, known: ShellType?) {
-        let displayType = known ?? type
-        
         if isPast {
-            shell.alpha = 0.3
+            body.alpha = 0.3
             primer.alpha = 0.3
             glow?.alpha = 0
             run(.scale(to: 0.7, duration: 0.2))
         } else if isCurrent {
-            shell.alpha = 1
+            body.alpha = 1
             primer.alpha = 1
             run(.scale(to: 1.1, duration: 0.2))
             
-            if known != nil {
-                // Update to known type
-                let color = displayType == .live ? 0xFF2222 : 0xDDDD33
-                shell.texture = SKTexture.fromColor(color, size: shell.size)
-                let primerColor = displayType == .live ? 0xAA0000 : 0xAAAA00
+            if let known = known {
+                let color = known == .live ? 0xFF2222 : 0xDDDD33
+                body.texture = SKTexture.fromColor(color, size: body.size)
+                let primerColor = known == .live ? 0xAA0000 : 0xAAAA00
                 primer.texture = SKTexture.fromColor(primerColor, size: primer.size)
                 
-                // Pulse animation
                 run(.repeatForever(.sequence([
                     .scale(to: 1.15, duration: 0.5),
                     .scale(to: 1.0, duration: 0.5)
-                ])), withKey: "pulse")
+                ]), withKey: "pulse")
             } else {
                 removeAction(forKey: "pulse")
             }
         } else {
-            shell.alpha = 0.6
+            body.alpha = 0.6
             primer.alpha = 0.6
             run(.scale(to: 0.9, duration: 0.2))
         }
     }
     
+    static func casing() -> SKNode {
+        let node = SKNode()
+        let body = SKSpriteNode(texture: SKTexture.fromColor(0xCCAA66, size: CGSize(width: 8, height: 16)))
+        let primer = SKSpriteNode(texture: SKTexture.fromColor(0x886622, size: CGSize(width: 6, height: 4)))
+        primer.position = CGPoint(x: 0, y: -8)
+        node.addChild(body)
+        node.addChild(primer)
+        return node
+    }
+    
     required init?(coder: NSCoder) { fatalError() }
-}
-
-// SKTexture helper
-extension SKTexture {
-    static func fromColor(_ hex: UInt32, size: CGSize) -> SKTexture {
-        let color = SKColor(hex: hex)
-        let renderer = UIGraphicsImageRenderer(size: size)
-        let image = renderer.image { ctx in
-            color.setFill()
-            ctx.fill(CGRect(origin: .zero, size: size))
-        }
-        return SKTexture(image: image)
-    }
-}
-
-extension SKColor {
-    convenience init(hex: UInt32, alpha: CGFloat = 1) {
-        let r = CGFloat((hex >> 16) & 0xFF) / 255
-        let g = CGFloat((hex >> 8) & 0xFF) / 255
-        let b = CGFloat(hex & 0xFF) / 255
-        self.init(red: r, green: g, blue: b, alpha: alpha)
-    }
 }

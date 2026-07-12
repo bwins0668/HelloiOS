@@ -171,13 +171,11 @@ class DealerNode: SKNode {
             eyeColor = 0xEEEECC
             pupilHeight = 10
             pupilColor = 0x440066
-            // Slight head tilt
             face.run(.rotate(toAngle: -0.05, duration: 0.3))
         case .amused:
             eyeColor = 0xFFEEAA
             pupilHeight = 6
             pupilColor = 0x660022
-            // Smile via card wiggle
             wiggleCards()
         case .annoyed:
             eyeColor = 0xFFCCCC
@@ -194,7 +192,6 @@ class DealerNode: SKNode {
             eyeColor = 0x333333
             pupilHeight = 2
             pupilColor = 0x111111
-            // Head slump
             face.run(.rotate(toAngle: 0.3, duration: 0.5))
             hat.run(.moveBy(x: 10, y: -30, duration: 0.5))
         }
@@ -296,7 +293,7 @@ class DealerNode: SKNode {
     }
 }
 
-// Game/Entities/ItemNode.swift
+// Game/Entities/ItemNode.swift - Uses Item from GameData.swift
 import SpriteKit
 
 class ItemNode: SKSpriteNode {
@@ -308,11 +305,10 @@ class ItemNode: SKSpriteNode {
     init(item: Item, size: CGSize = CGSize(width: 70, height: 90)) {
         self.item = item
         
-        // Card background
-        let cardTexture = SKTexture.fromColor(0x1A0A1A, size: size)
         self.icon = SKLabelNode(text: String(item.type.iconName.first!))
         self.nameLabel = SKLabelNode(text: item.type.displayName)
         
+        let cardTexture = SKTexture.fromColor(0x1A0A1A, size: size)
         super.init(texture: cardTexture, color: .clear, size: size)
         
         setup()
@@ -333,7 +329,7 @@ class ItemNode: SKSpriteNode {
         border.zPosition = -1
         addChild(border)
         
-        // Icon (using SF Symbol as emoji fallback)
+        // Icon
         icon.fontName = "SF Pro Text"
         icon.fontSize = 28
         icon.fontColor = SKColor(hex: item.type.color)
@@ -413,10 +409,8 @@ class ItemNode: SKSpriteNode {
             .scale(to: 1.0, duration: 0.1)
         ]))
     }
-}
-
-// Touch handling
-extension ItemNode {
+    
+    // Touch handling
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
         guard !item.used else { return }
         setSelected(true)
