@@ -15,8 +15,9 @@ private enum RouletteTheme {
     static let text = Color.white
     static let textDim = Color.white.opacity(0.55)
     static let demon = Color(red: 0.65, green: 0.15, blue: 0.75)
-    static let demonGlow = Color(red: 0.9, green: 0.3, blue: 1.0)
-}
+        static let demonGlow = Color(red: 0.9, green: 0.3, blue: 1.0)
+        static let orange = Color(red: 1.0, green: 0.55, blue: 0.1)
+    }
 
 // MARK: - Models
 
