@@ -263,14 +263,14 @@ class ShotgunNode: SKNode {
         let hammerBack = SKAction.rotate(toAngle: -.pi/3, duration: 0.1)
         hammer.run(hammerBack)
         
-        let slideBack = SKAction.moveBy(x: -45, duration: 0.15)
+        let slideBack = SKAction.moveBy(x: -45, y: 0, duration: 0.15)
         slideBack.timingMode = .easeOut
         
         let ejectShell = SKAction.run { [weak self] in
             self?.ejectCurrentShell()
         }
         
-        let slideForward = SKAction.moveBy(x: 45, duration: 0.12)
+        let slideForward = SKAction.moveBy(x: 45, y: 0, duration: 0.12)
         slideForward.timingMode = .easeIn
         
         let hammerForward = SKAction.rotate(toAngle: 0, duration: 0.08)
@@ -331,8 +331,8 @@ class ShotgunNode: SKNode {
         
         // Recoil
         let recoil = SKAction.sequence([
-            .moveBy(x: -25, duration: 0.05),
-            .moveBy(x: 25, duration: 0.2)
+            .moveBy(x: -25, y: 0, duration: 0.05),
+            .moveBy(x: 25, y: 0, duration: 0.2)
         ])
         recoil.timingMode = .easeOut
         body.run(recoil)
@@ -395,6 +395,7 @@ class DealerNode: SKNode {
         self.cards = DealerNode.makeCards()
         
         super.init()
+        
         setupHierarchy()
         startBlinking()
     }
