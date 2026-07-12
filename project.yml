@@ -19,5 +19,5 @@ targets:
       base:
         INFOPLIST_FILE: HelloiOS/Info.plist
         PRODUCT_BUNDLE_IDENTIFIER: com.coco.helloiOS
-        MARKETING_VERSION: "1.2"
-        CURRENT_PROJECT_VERSION: "3"
+        MARKETING_VERSION: "1.3"
+        CURRENT_PROJECT_VERSION: "4"
