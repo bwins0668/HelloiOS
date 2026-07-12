@@ -33,9 +33,9 @@ class GameScene: SKScene {
         glow1.zPosition = -10
         glow1.blendMode = .add
         addChild(glow1)
-        glow1.run(.repeatForever(.sequence([
-            .fadeAlpha(to: 0.12, duration: 3),
-            .fadeAlpha(to: 0.05, duration: 3)
+        glow1.run(SKAction.repeatForever(SKAction.sequence([
+            SKAction.fadeAlpha(to: 0.12, duration: 3),
+            SKAction.fadeAlpha(to: 0.05, duration: 3)
         ])))
         
         let glow2 = SKSpriteNode(color: SKColor(hex: 0x002244, alpha: 0.06), size: CGSize(width: 350, height: 350))
@@ -43,9 +43,9 @@ class GameScene: SKScene {
         glow2.zPosition = -10
         glow2.blendMode = .add
         addChild(glow2)
-        glow2.run(.repeatForever(.sequence([
-            .fadeAlpha(to: 0.1, duration: 4),
-            .fadeAlpha(to: 0.03, duration: 4)
+        glow2.run(SKAction.repeatForever(SKAction.sequence([
+            SKAction.fadeAlpha(to: 0.1, duration: 4),
+            SKAction.fadeAlpha(to: 0.03, duration: 4)
         ])))
         
         // Shotgun
@@ -82,6 +82,7 @@ class GameScene: SKScene {
     }
     
     private func bindState() {
+        // Phase changes
         gameState.$phase.sink { [weak self] phase in
             self?.onPhaseChange(phase)
         }.store(in: &cancellables)
@@ -197,7 +198,7 @@ class GameScene: SKScene {
         overlay.position = .zero
         overlay.alpha = 0
         addChild(overlay)
-        overlay.run(.fadeIn(withDuration: 0.2))
+        overlay.run(SKAction.fadeIn(withDuration: 0.2))
         magnifierOverlay = overlay
     }
     
@@ -211,11 +212,11 @@ class GameScene: SKScene {
         label.zPosition = 60
         label.alpha = 0
         addChild(label)
-        label.run(.sequence([
-            .group([.fadeIn(withDuration: 0.2), .moveBy(x: 0, y: 20, duration: 0.2)]),
-            .wait(forDuration: 3),
-            .group([.fadeOut(withDuration: 0.3), .moveBy(x: 0, y: 20, duration: 0.3)]),
-            .removeFromParent()
+        label.run(SKAction.sequence([
+            SKAction.group([SKAction.fadeIn(withDuration: 0.2), SKAction.moveBy(x: 0, y: 20, duration: 0.2)]),
+            SKAction.wait(forDuration: 3),
+            SKAction.group([SKAction.fadeOut(withDuration: 0.3), SKAction.moveBy(x: 0, y: 20, duration: 0.3)]),
+            SKAction.removeFromParent()
         ]))
     }
     
@@ -276,15 +277,29 @@ class GameScene: SKScene {
         menuBtn.addChild(menuLabel)
         
         overlay.alpha = 0
-        overlay.run(.fadeIn(withDuration: 0.3))
+        overlay.run(SKAction.fadeIn(withDuration: 0.3))
         addChild(overlay)
         
-        let touchHandler = GameOverTouchHandler(overlay: overlay, scene: self, won: won)
-        overlay.userData = ["handler": touchHandler]
+        overlay.isUserInteractionEnabled = true
     }
     
     override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
         if gameState.phase == .gameOver {
+            guard let touch = touches.first else { return }
+            let location = touch.location(in: self)
+            let node = atPoint(location)
+            
+            if node.name == "retry" {
+                run(SKAction.sequence([
+                    SKAction.run { self.showGameOver() },
+                    SKAction.run { self.removeAllChildren() },
+                    SKAction.run { self.gameState.startNewGame() }
+                ]))
+                return
+            } else if node.name == "menu" {
+                gameState.phase = .menu
+                return
+            }
             return
         }
         
@@ -296,7 +311,7 @@ class GameScene: SKScene {
         if let overlay = magnifierOverlay {
             let loc = touches.first?.location(in: self) ?? .zero
             if !overlay.contains(loc) {
-                overlay.run(.sequence([.fadeOut(withDuration: 0.2), .removeFromParent()]))
+                overlay.run(SKAction.sequence([SKAction.fadeOut(withDuration: 0.2), SKAction.removeFromParent()]))
                 magnifierOverlay = nil
                 gameState.magnifierShell = nil
             }
@@ -307,36 +322,5 @@ class GameScene: SKScene {
         removeAllChildren()
         cancellables.removeAll()
         didMove(to: view!)
-    }
-}
-
-// GameOverTouchHandler
-class GameOverTouchHandler: NSObject {
-    let overlay: SKNode
-    let scene: GameScene
-    let won: Bool
-    
-    init(overlay: SKNode, scene: GameScene, won: Bool) {
-        self.overlay = overlay
-        self.scene = scene
-        self.won = won
-        super.init()
-        overlay.isUserInteractionEnabled = true
-    }
-    
-    func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
-        guard let touch = touches.first else { return }
-        let location = touch.location(in: overlay)
-        let node = overlay.atPoint(location)
-        
-        if node.name == "retry" {
-            overlay.run(.fadeOut(withDuration: 0.2)) {
-                self.scene.gameState.startNewGame()
-            }
-        } else if node.name == "menu" {
-            overlay.run(.fadeOut(withDuration: 0.2)) {
-                self.scene.gameState.phase = .menu
-            }
-        }
     }
 }
