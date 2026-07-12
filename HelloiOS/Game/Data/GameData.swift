@@ -200,6 +200,7 @@ struct DealerLines {
 
 // MARK: - Game State
 
+@MainActor
 class GameState: ObservableObject {
     @Published var phase: GamePhase = .menu
     @Published var currentRound: Int = 1
